@@ -13,7 +13,7 @@
  * @param string $inputLine 
  * @return array|bool - array(name)
  */
-function isLineStartOfClass($inputLine) {
+function is_line_start_of_class($inputLine) {
     // remove comment block
     $inputLine = preg_replace('%/\*(.*?)\*/%i', '', $inputLine);
     
@@ -45,7 +45,7 @@ function isLineStartOfClass($inputLine) {
  * @param mixed $line 
  * @return  
  */
-function isLineStartOfFunction($line) {
+function is_line_start_of_function($line) {
     // get the function name from a line
     if (preg_match("/^\s*(public|protected|private|final|static|\s)*function\s*(.*?)\s*\((.*?)\)/smi", $line, $match)) {
         $lineData = array(

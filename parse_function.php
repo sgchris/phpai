@@ -1,6 +1,39 @@
 <?php
 
+require_once __DIR__.'/libs/functions.php';
 require_once __DIR__.'/libs/parser.php';
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+// check if this is the file that's being executed
+if (isset($_SERVER['argv']) && $_SERVER['argv'][0] && $_SERVER['argv'][0] == basename(__FILE__)) {
+    // receive parameters
+    $params = getopt('', [
+        'content:',
+        'file:'
+    ]);
+    
+    // get the content
+    $content = '';
+    if (isset($params['content'])) {
+        $content = $params['content'];
+    } elseif (isset($params['file'])) {
+        if (file_exists($params['file']) && is_readable($params['file'])) {
+            $content = file_get_contents($params['file']);
+        }
+    }
+    
+    // output the result
+    if (!empty($content)) {
+        echo json_encode(parse_function($content), JSON_PRETTY_PRINT);
+    } else {
+        echo "Empty content\n";
+    }
+    
+    die();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Parse function contents
@@ -14,11 +47,13 @@ function parse_function($content) {
     }
 
     $parsedData = [
-        'phpdoc' => getFunctionPhpDoc($content),
-        'name' => getFunctionName($content),
-        'arguments' => getFunctionArguments($content),
-        'arguments' => getFunctionArguments($content),
+        'content' => $content,
+        'phpdoc' => _get_function_phpdoc($content),
+        'name' => _get_function_name($content),
+        'arguments' => _get_function_arguments($content),
     ];
+    
+    return $parsedData;
 }
 
 ////////////// private //////////////
@@ -29,12 +64,12 @@ function parse_function($content) {
  * @param mixed $content - the content of the function
  * @return array
  */
-function getFunctionPhpDoc($content) {
+function _get_function_phpdoc($content) {
     if (empty($content)) {
         return [];
     }
     
-    $tokens = token_get_all($content);
+    $tokens = stripos($content, '<?') === false ? token_get_all('<?php ' . $content) : token_get_all($content);
     $commentCode = '';
     foreach ($tokens as $tokenData) {
         if (is_array($tokenData) && count($tokenData) > 1) {
@@ -50,7 +85,7 @@ function getFunctionPhpDoc($content) {
         }
     }
     
-    $commentLines = preg_split('#\r*\n*#', $commentCode);
+    $commentLines = split_into_lines($commentCode);
 
     // get only the comment content
     foreach ($commentLines as $i => $commentLine) {
@@ -59,7 +94,7 @@ function getFunctionPhpDoc($content) {
         $commentLines[$i] = $commentLine;
     }
     
-    return parsePhpDocLines($commentLines);
+    return _parse_php_doc_lines($commentLines);
 }
 
 
@@ -69,15 +104,17 @@ function getFunctionPhpDoc($content) {
  * @param array $phpDocLines 
  * @return array
  */
-function parsePhpDocLines(array $phpDocLines) {
+function _parse_php_doc_lines(array $phpDocLines) {
     // the final result
     $result = array();
+    
     // the currently tracked key/value
     $currentKey = 'brief';
     $currentVal = '';
     foreach ($phpDocLines as $line) {
         // remove the leading comment operators (preserve the white-space after the comment opener/closer)
         $line = preg_replace('%^\s*/?\**/?\s?%i', '', $line);
+        
         // check if there's a new key in that line
         if (preg_match('%^@(.*?)(\s|$)%', $line, $match)) {
             // save the previous key/val
@@ -100,11 +137,54 @@ function parsePhpDocLines(array $phpDocLines) {
             $currentVal = $currentVal . (!empty($currentVal) ? "\n" : '') . $line;
         }
     }
+    
     // write the last key/val
     $result[$currentKey] = trim($currentVal);
+    
     // check if the doc is empty (empty brief and no other keys)
     if (count($result) == 1 && $currentKey == 'brief' && empty($result[$currentKey])) {
         return array();
     }
+    
     return $result;
 }
+
+
+/**
+ * Get the name of the function
+ * 
+ * @param mixed $content 
+ * @return string
+ */
+function _get_function_name($content) {
+    $lines = split_into_lines($content);
+    
+    foreach ($lines as $line) {
+        if (($functionData = is_line_start_of_function($line)) !== false) {
+            return $functionData['name'];
+        }
+    }
+    
+    return false;
+}
+
+
+/**
+ * Get the arguments of the function
+ * 
+ * @param mixed $content 
+ * @return string
+ */
+function _get_function_arguments($content) {
+    $lines = split_into_lines($content);
+    
+    foreach ($lines as $line) {
+        if (($functionData = is_line_start_of_function($line)) !== false) {
+            return $functionData['params'];
+        }
+    }
+    
+    return false;
+}
+
+
