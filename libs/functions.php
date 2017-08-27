@@ -1,6 +1,46 @@
 <?php
 
 /**
+ * Check if executed script is the one provided - if yes, execute it and 
+ * @param mixed $filePath 
+ * @return  
+ */
+function execute_this_file_if_requested($filePath) {
+    
+    // get the name of the function from the file name
+    $functionName = preg_replace('#\.php$#i', '', basename($filePath));
+    
+    // check if this is the file that's being executed
+    if (isset($_SERVER['argv']) && $_SERVER['argv'][0] && $_SERVER['argv'][0] == basename($filePath)) {
+        // receive parameters
+        $params = getopt('', [
+            'content:',
+            'file:'
+        ]);
+        
+        // get the content
+        $content = '';
+        if (isset($params['content'])) {
+            $content = $params['content'];
+        } elseif (isset($params['file'])) {
+            if (file_exists($params['file']) && is_readable($params['file'])) {
+                $content = file_get_contents($params['file']);
+            }
+        }
+        
+        // output the result
+        if (!empty($content)) {
+            echo json_encode($functionName($content), JSON_PRETTY_PRINT);
+        } else {
+            echo "Empty content\n";
+        }
+        
+        die();
+    }
+}
+
+
+/**
  * replace only the first occurrence of a string
  * 
  * @param string $from
