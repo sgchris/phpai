@@ -19,9 +19,12 @@ function parse_class($content) {
     $parsedData = [
         'content' => $content,
         'phpdoc' => _get_class_phpdoc($content),
-        'name' => _get_function_name($content),
-        'arguments' => _get_function_arguments($content),
+        'name' => _get_class_name($content),
+        'extends' => _get_class_extends($content),
+        'methods' => _get_class_methods($content),
     ];
+    
+    return $parsedData;
 }
 
 ////////////// private //////////////
@@ -63,4 +66,81 @@ function _get_class_phpdoc($content) {
     }
     
     return parse_php_doc_lines($commentLines);
+}
+
+
+/**
+ * Get the name of the class/interface
+ * 
+ * @param mixed $content 
+ * @return string
+ */
+function _get_class_name($content) {
+    $lines = split_into_lines($content);
+    
+    foreach ($lines as $line) {
+        if (($classData = is_line_start_of_class($line)) !== false) {
+            return $classData['name'] ?? false;
+        }
+    }
+    
+    return false;
+}
+
+
+/**
+ * Get the name of the class/interface
+ * 
+ * @param mixed $content 
+ * @return string
+ */
+function _get_class_extends($content) {
+    if (empty($content)) {
+        return false;
+    }
+    
+    // get PHP tokens
+    $tokens = get_tokens($content);
+    
+    // find "extends" token and return the string that comes right after it
+    foreach ($tokens as $i => $token) {
+        if (is_array($token) && isset($token[0]) && $token[0] == 'T_EXTENDS') {
+            // return the string that comes after the 
+            return $tokens[$i + 2][1] ?? false;
+        }
+    }
+    
+    return false;
+}
+
+
+/**
+ * Get list of methods of the class. Parse every method, and return the full array
+ * 
+ * @param mixed $content 
+ * @return array|false
+ */
+function _get_class_methods($content) {
+    if (empty($content)) {
+        return false;
+    }
+    
+    $lines = split_into_lines($content);
+    
+    // the lines of the method will be here
+    $functionContentLines = [];
+    
+    foreach ($lines as $i => $line) {
+        if (is_line_start_of_function($line)) {
+            
+            // collect the phpdoc (or just comments above the method)
+            $j = $i - 1;
+            while (is_comment_line($lines[$j--]) && $j>0) {}
+            $functionContentLines = array_slice($lines, $j + 1, $i - $j);
+            
+            // collect the method contents
+            // ...STOPPED HERE...
+        }
+    }
+    return false;
 }

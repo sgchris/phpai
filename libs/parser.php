@@ -32,19 +32,14 @@ function is_line_start_of_class($inputLine) {
     }
     
     // get the function name from a line
-    if (preg_match("/^\s*(abstract\s+)*\bclass\s+(.*?)[\s\{]?$/i", $inputLine, $match)) {
-        $lineData = array(
-            'name' => $match[2],
-        );
-        
-        // @TODO add "Extends" check and add to $lineData
-        
-        // @TODO add "Implements" check and add to $lineData
-        
-        return $lineData;
+    $isClassLine = false;
+    $lineData = array();
+    if (preg_match("/^\s*(abstract\s+)*\bclass\s+(.*?)[\s\{]+$/i", $inputLine, $match)) {
+        $isClassLine = true;
+        $lineData['name'] = $match[2];
     }
     
-    return false;
+    return empty($lineData) ? false : $lineData;
 }
 
 
@@ -68,6 +63,15 @@ function is_line_start_of_function($line) {
     return false;
 }
 
+/**
+ * Check if the line is a comment line, i.e. starts with "//" or "/*" or just "*"
+ * 
+ * @param mixed $line 
+ * @return boolean
+ */
+function is_comment_line($line) {
+    return preg_match('#^\s*[(/|\*)]+#', $line);
+}
 
 /**
  * get php doc lines and transform it into an associative array 
@@ -118,4 +122,23 @@ function parse_php_doc_lines(array $phpDocLines) {
     }
     
     return $result;
+}
+
+
+/**
+ * get PHP tokens from the source
+ * @param mixed $content 
+ * @return  
+ */
+function get_tokens($content) {
+    $tokens = stripos($content, '<?') === false ? token_get_all('<?php ' . $content) : token_get_all($content);
+    
+    // convert tokens to strings
+    foreach ($tokens as $i => $tokenData) {
+        if (is_array($tokenData) && isset($tokenData[0])) {
+            $tokens[$i][0] = token_name($tokenData[0]);
+        }
+    }
+    
+    return $tokens;
 }

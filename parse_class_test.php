@@ -12,15 +12,16 @@ $tests = [
     'check one line comment' => [
         'function_name' => $funcName,
         'content' => '
-                // function one line comment
-                function foo() { 
-                    $x = 10;
+                // class one line comment
+                class myclass { 
+                    public function foo() {
+                    }
                 }
             ',
         'expected' => function($actual) {
             return isset($actual['phpdoc']) &&
                 isset($actual['phpdoc']['brief']) &&
-                $actual['phpdoc']['brief'] == 'function one line comment';
+                $actual['phpdoc']['brief'] == 'class one line comment';
         },
     ],
 
@@ -28,79 +29,137 @@ $tests = [
         'function_name' => $funcName,
         'content' => '
                 /** 
-                 * function multiple 
+                 * class multiple 
                  * line comment
                  */
-                function foo() { 
-                    $x = 10;
+                class myclass { 
+                    public function foo() {
+                    }
                 }
             ',
         'expected' => function($actual) {
             return isset($actual['phpdoc']) &&
                 isset($actual['phpdoc']['brief']) &&
-                $actual['phpdoc']['brief'] == "function multiple\nline comment";
+                $actual['phpdoc']['brief'] == "class multiple\nline comment";
         }
     ],
 
-    'check function name' => [
+    'check class name' => [
         'function_name' => $funcName,
         'content' => '
                 /** 
-                 * function multiple 
+                 * class multiple 
                  * line comment
                  */
-                function foo() { 
-                    $x = 10;
+                class myclass { 
+                    public function foo() {
+                    }
                 }
             ',
         'expected' => array(
-            'name' => 'foo',
+            'name' => 'myclass',
         ),
     ],
 
-    'check function content' => [
+    'check abstract class name' => [
         'function_name' => $funcName,
         'content' => '
                 /** 
-                 * function multiple 
+                 * abstract class multiple 
                  * line comment
                  */
-                function foo() { 
-                    $x = 10;
+                abstract class myclass { 
+                    public function foo() {
+                    }
+                }
+            ',
+        'expected' => array(
+            'name' => 'myclass',
+        ),
+    ],
+
+    'check class content' => [
+        'function_name' => $funcName,
+        'content' => '
+                /** 
+                 * abstract class multiple 
+                 * line comment
+                 */
+                abstract class myclass { 
+                    public function foo() {
+                    }
                 }
             ',
         'expected' => array(
             'content' => '
                 /** 
-                 * function multiple 
+                 * abstract class multiple 
                  * line comment
                  */
-                function foo() { 
-                    $x = 10;
+                abstract class myclass { 
+                    public function foo() {
+                    }
                 }
             ',
         ),
     ],
 
-    'check function arguments' => [
+    'check function extends' => [
         'function_name' => $funcName,
         'content' => '
                 /** 
-                 * function multiple 
+                 * abstract class multiple 
                  * line comment
                  */
-                function foo($x, $y) { 
-                    $x = 10;
+                abstract class myclass extends mybaseclass { 
+                    public function foo() {
+                    }
                 }
             ',
         'expected' => array(
-            'arguments' => '$x, $y',
+            'extends' => 'mybaseclass',
         ),
+    ],
+    
+    'check function extends #2' => [
+        'function_name' => $funcName,
+        'content' => '
+                /** 
+                 * abstract class multiple 
+                 * line comment
+                 */
+                abstract class myclass extends      mybaseclass { 
+                    public function foo() {
+                    }
+                }
+            ',
+        'expected' => array(
+            'extends' => 'mybaseclass',
+        ),
+    ],
+    
+    
+    'check parsed functions number' => [
+        'function_name' => $funcName,
+        'content' => '
+                /** 
+                 * abstract class multiple 
+                 * line comment
+                 */
+                abstract class myclass extends      mybaseclass { 
+                    public function foo() {
+                    }
+                    
+                    abstract protected function bar() {
+                    }
+                }
+            ',
+        'expected' => function($result) {
+            return isset($result['methods']) && is_array($result['methods']) && count($result['methods']) == 2;
+        },
     ],
 ];
 
-$untested = [
-];
 
 
 // include the testing library
