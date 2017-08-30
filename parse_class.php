@@ -3,6 +3,9 @@
 require_once __DIR__.'/libs/functions.php';
 require_once __DIR__.'/libs/parser.php';
 
+// include the functions parsing to parse class' methods
+require_once __DIR__.'/parse_function.php';
+
 execute_this_file_if_requested(__FILE__);
 
 /**
@@ -127,20 +130,67 @@ function _get_class_methods($content) {
     
     $lines = split_into_lines($content);
     
-    // the lines of the method will be here
-    $functionContentLines = [];
+    $functions = [];
     
-    foreach ($lines as $i => $line) {
+    for ($i = 0; $i < count($lines); $i++) {
+        $line = $lines[$i];
+        
         if (is_line_start_of_function($line)) {
+            $functionContentLines = [];
             
             // collect the phpdoc (or just comments above the method)
             $j = $i - 1;
-            while (is_comment_line($lines[$j--]) && $j>0) {}
-            $functionContentLines = array_slice($lines, $j + 1, $i - $j);
+            if (is_comment_line($lines[$j])) {
+                while (is_comment_line($lines[$j]) && $j>0) { $j--; }
+                $functionContentLines = array_slice($lines, $j + 1, $i - $j);
+            }
             
             // collect the method contents
-            // ...STOPPED HERE...
+            $functionContentLines = array_merge($functionContentLines, _get_method_contents($lines, $i));
+            
+            // parse the function content
+            $parsedFunctionData = parse_function(implode(PHP_EOL, $functionContentLines));
+            if ($parsedFunctionData !== false) {
+                $functions[$parsedFunctionData['name']] = $parsedFunctionData;
+            }
         }
     }
-    return false;
+    
+    return $functions;
+}
+
+
+/**
+ * Get list of lines
+ * 
+ * @param array $contentLines 
+ * @param mixed $startFromLineNumber 
+ * @return array
+ */
+function _get_method_contents(array $contentLines, $startFromLineNumber = 0) {
+    $statementContentLines = array();
+    
+    // gather all the statement lines
+    $bracketsBalance = false;
+    for (;$bracketsBalance !== 0 && $startFromLineNumber < count($contentLines); $startFromLineNumber++) {
+        $line = $contentLines[$startFromLineNumber];
+        
+        // get the brackets statistics
+        $totalOpens = substr_count($line, '{');
+        $totalCloses = substr_count($line, '}');
+
+        // check the first open tag of a function
+        if ($totalOpens > 0 && $bracketsBalance === false) {
+            $bracketsBalance = 0;
+        } elseif ($bracketsBalance === false) {
+            // statement's first bracket still didn't appear
+            continue;
+        }
+
+        $bracketsBalance+= $totalOpens;
+        $bracketsBalance-= $totalCloses;
+        $statementContentLines[] = $line;
+    }
+    
+    return $statementContentLines;
 }

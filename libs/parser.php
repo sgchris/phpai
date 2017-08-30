@@ -34,9 +34,9 @@ function is_line_start_of_class($inputLine) {
     // get the function name from a line
     $isClassLine = false;
     $lineData = array();
-    if (preg_match("/^\s*(abstract\s+)*\bclass\s+(.*?)[\s\{]+$/i", $inputLine, $match)) {
+    if (preg_match("/^\s*[(!?abstract)]*\s*class\s*(.*?)[\s\{]+/i", $inputLine, $match)) {
         $isClassLine = true;
-        $lineData['name'] = $match[2];
+        $lineData['name'] = $match[1];
     }
     
     return empty($lineData) ? false : $lineData;
@@ -51,10 +51,11 @@ function is_line_start_of_class($inputLine) {
  */
 function is_line_start_of_function($line) {
     // get the function name from a line
-    if (preg_match("/^\s*(public|protected|private|final|static|\s)*function\s*(.*?)\s*\((.*?)\)/smi", $line, $match)) {
+    //preg_match("/^\s*[(!?abstract|!?public|!?protected|!?private|!?final|\s)]*\s*function\s*(.*?)\s*\((.*?)\)/", $input_line, $output_array);
+    if (preg_match("/^\s*[(!?abstract|!?public|!?protected|!?private|!?final|\s)]*\s*function\s*(.*?)\s*\((.*?)\)/i", $line, $match)) {
         $lineData = array(
-            'name' => $match[2], 
-            'params' => $match[3]
+            'name' => $match[1], 
+            'params' => $match[2]
         );
         
         return $lineData;

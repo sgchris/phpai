@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/console_helper.php';
+require_once __DIR__ . '/functions.php';
 
 /**
  * execute list of tests
