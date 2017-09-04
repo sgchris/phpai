@@ -126,6 +126,42 @@ function parse_php_doc_lines(array $phpDocLines) {
 
 
 /**
+ * Get the lines of a statement. Statement is defined between {...} brackets
+ * 
+ * @param array $contentLines 
+ * @param mixed $startFromLineNumber 
+ * @return array
+ */
+function get_statement_contents(array $contentLines, $startFromLineNumber = 0) {
+    $statementContentLines = array();
+    
+    // gather all the statement lines
+    $bracketsBalance = false;
+    for (;$bracketsBalance !== 0 && $startFromLineNumber < count($contentLines); $startFromLineNumber++) {
+        $line = $contentLines[$startFromLineNumber];
+        
+        // get the brackets statistics
+        $totalOpens = substr_count($line, '{');
+        $totalCloses = substr_count($line, '}');
+
+        // check the first open tag of a function
+        if ($totalOpens > 0 && $bracketsBalance === false) {
+            $bracketsBalance = 0;
+        } elseif ($bracketsBalance === false) {
+            // statement's first bracket still didn't appear
+            continue;
+        }
+
+        $bracketsBalance+= $totalOpens;
+        $bracketsBalance-= $totalCloses;
+        $statementContentLines[] = $line;
+    }
+    
+    return $statementContentLines;
+}
+
+
+/**
  * get PHP tokens from the source
  * @param mixed $content 
  * @return  

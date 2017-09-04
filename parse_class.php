@@ -146,7 +146,7 @@ function _get_class_methods($content) {
             }
             
             // collect the method contents
-            $functionContentLines = array_merge($functionContentLines, _get_method_contents($lines, $i));
+            $functionContentLines = array_merge($functionContentLines, get_statement_contents($lines, $i));
             
             // parse the function content
             $parsedFunctionData = parse_function(implode(PHP_EOL, $functionContentLines));
@@ -159,38 +159,3 @@ function _get_class_methods($content) {
     return $functions;
 }
 
-
-/**
- * Get list of lines
- * 
- * @param array $contentLines 
- * @param mixed $startFromLineNumber 
- * @return array
- */
-function _get_method_contents(array $contentLines, $startFromLineNumber = 0) {
-    $statementContentLines = array();
-    
-    // gather all the statement lines
-    $bracketsBalance = false;
-    for (;$bracketsBalance !== 0 && $startFromLineNumber < count($contentLines); $startFromLineNumber++) {
-        $line = $contentLines[$startFromLineNumber];
-        
-        // get the brackets statistics
-        $totalOpens = substr_count($line, '{');
-        $totalCloses = substr_count($line, '}');
-
-        // check the first open tag of a function
-        if ($totalOpens > 0 && $bracketsBalance === false) {
-            $bracketsBalance = 0;
-        } elseif ($bracketsBalance === false) {
-            // statement's first bracket still didn't appear
-            continue;
-        }
-
-        $bracketsBalance+= $totalOpens;
-        $bracketsBalance-= $totalCloses;
-        $statementContentLines[] = $line;
-    }
-    
-    return $statementContentLines;
-}
