@@ -51,7 +51,6 @@ function is_line_start_of_class($inputLine) {
  */
 function is_line_start_of_function($line) {
     // get the function name from a line
-    //preg_match("/^\s*[(!?abstract|!?public|!?protected|!?private|!?final|\s)]*\s*function\s*(.*?)\s*\((.*?)\)/", $input_line, $output_array);
     if (preg_match("/^\s*[(!?abstract|!?public|!?protected|!?private|!?final|\s)]*\s*function\s*(.*?)\s*\((.*?)\)/i", $line, $match)) {
         $lineData = array(
             'name' => $match[1], 
