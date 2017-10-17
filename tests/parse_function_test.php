@@ -1,7 +1,10 @@
 <?php
 
+define ('BASEDIR', dirname(__DIR__));
+
 // include the library
-require_once str_replace('_test', '', __FILE__);
+require_once BASEDIR.'/'.str_replace('_test', '', basename(__FILE__));
+require_once BASEDIR.'/libs/execute_tests.php';
 
 // get the name of the main library function
 $funcName = str_ireplace('_test.php', '', basename(__FILE__));
@@ -104,5 +107,4 @@ $untested = [
 
 
 // include the testing library
-require_once __DIR__.'/libs/execute_tests.php';
 execute_tests($tests);
