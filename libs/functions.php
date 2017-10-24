@@ -60,6 +60,10 @@ function str_replace_first($from, $to, $subject) {
  * @return array
  */
 function split_into_lines($content) {
+    if (!is_string($content)) {
+        return false;
+    }
+    
     return preg_split('#[\r\n]+#', $content);
 }
 

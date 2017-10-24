@@ -3,6 +3,9 @@
 require_once __DIR__.'/libs/functions.php';
 require_once __DIR__.'/libs/parser.php';
 
+// include the functions parsing to parse class' methods
+require_once __DIR__.'/parse_class.php';
+
 execute_this_file_if_requested(__FILE__);
 
 /**
@@ -20,7 +23,8 @@ function parse_file($content) {
         'content' => $content,
         'phpdoc' => _get_file_phpdoc($content),
         'classes' => _get_file_classes($content),
-        'functions' => _get_file_functions($content),
+        //'functions' => _get_file_functions($content),
+        //'namespace' => _get_file_namespace($content),
     ];
     
     return $parsedData;
@@ -40,9 +44,24 @@ function _get_file_phpdoc($content) {
         return [];
     }
     
-    $foundMatch = preg_match_all("/<\?[(?!php)]*\s*\/\*\*(.*?)\s*\*\//smi", $content, $matches);
-    
-    return $foundMatch ? parse_php_doc_lines($matches[1]) : [];
+    // get the first PHPDoc in the file
+    $foundMatch = preg_match("/[(?!<\?php)]\s*\/\*\*(.*?)\s*\*\//smi", $content, $matches);
+
+    $commentLines = [];
+    if ($foundMatch) {
+        $commentCode = $matches[1];
+        $commentLines = split_into_lines($commentCode);
+
+        // get only the comment content
+        foreach ($commentLines as $i => $commentLine) {
+            $commentLine = trim($commentLine);
+            $commentLine = remove_comment_start($commentLine);
+            $commentLines[$i] = $commentLine;
+        }
+
+    }
+
+    return parse_php_doc_lines($commentLines);
 }
 
 
