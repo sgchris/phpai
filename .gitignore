@@ -3,4 +3,7 @@
 *.phprj
 .codelite
 
+# vim files
+*.swp
+
 

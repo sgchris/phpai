@@ -23,7 +23,7 @@ function parse_file($content) {
         'content' => $content,
         'phpdoc' => _get_file_phpdoc($content),
         'classes' => _get_file_classes($content),
-        //'functions' => _get_file_functions($content),
+        'functions' => _get_file_functions($content),
         //'namespace' => _get_file_namespace($content),
     ];
     
@@ -105,4 +105,64 @@ function _get_file_classes($content) {
     }
     
     return $classes;
+}
+
+function _get_file_functions($content) {
+    if (empty($content)) {
+        return false;
+    }
+    
+    $lines = split_into_lines($content);
+    
+    $functions = [];
+    
+    for ($i = 0; $i < count($lines); $i++) {
+        $line = $lines[$i];
+        
+        if (is_line_start_of_class($line)) {
+            $classContentLines = [];
+            
+            // collect the phpdoc (or just comments above the class)
+            $j = $i - 1;
+            if (is_comment_line($lines[$j])) {
+                while (is_comment_line($lines[$j]) && $j>0) { $j--; }
+                $classContentLines = array_slice($lines, $j + 1, $i - $j);
+            }
+            
+            // collect the method contents
+            $classContentLines = array_merge($classContentLines, get_statement_contents($lines, $i));
+            
+            // parse the class content
+            $parsedClassData = parse_class(implode(PHP_EOL, $classContentLines));
+            if ($parsedClassData !== false) {
+                $classes[$parsedClassData['name']] = $parsedClassData;
+            }
+
+			// promote the counter to the end of the class
+			$i+= count($classContentLines) - 1;
+			continue;
+        }
+
+        if (is_line_start_of_function($line)) {
+            $functionContentLines = [];
+            
+            // collect the phpdoc (or just comments above the method)
+            $j = $i - 1;
+            if (is_comment_line($lines[$j])) {
+                while (is_comment_line($lines[$j]) && $j>0) { $j--; }
+                $functionContentLines = array_slice($lines, $j + 1, $i - $j);
+            }
+            
+            // collect the method contents
+            $functionContentLines = array_merge($functionContentLines, get_statement_contents($lines, $i));
+            
+            // parse the function content
+            $parsedFunctionData = parse_function(implode(PHP_EOL, $functionContentLines));
+            if ($parsedFunctionData !== false) {
+                $functions[$parsedFunctionData['name']] = $parsedFunctionData;
+            }
+        }
+    }
+    
+    return $functions;
 }
