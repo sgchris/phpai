@@ -16,7 +16,7 @@ $tests = [
         'function_name' => $funcName,
         'content' => '
                 // function one line comment
-                function foo() { 
+                function foo() {
                     $x = 10;
                 }
             ',
@@ -30,11 +30,11 @@ $tests = [
     'check multi line comment' => [
         'function_name' => $funcName,
         'content' => '
-                /** 
-                 * function multiple 
+                /**
+                 * function multiple
                  * line comment
                  */
-                function foo() { 
+                function foo() {
                     $x = 10;
                 }
             ',
@@ -48,11 +48,11 @@ $tests = [
     'check function name' => [
         'function_name' => $funcName,
         'content' => '
-                /** 
-                 * function multiple 
+                /**
+                 * function multiple
                  * line comment
                  */
-                function foo() { 
+                function foo() {
                     $x = 10;
                 }
             ',
@@ -64,21 +64,21 @@ $tests = [
     'check function content' => [
         'function_name' => $funcName,
         'content' => '
-                /** 
-                 * function multiple 
+                /**
+                 * function multiple
                  * line comment
                  */
-                function foo() { 
+                function foo() {
                     $x = 10;
                 }
             ',
         'expected' => array(
             'content' => '
-                /** 
-                 * function multiple 
+                /**
+                 * function multiple
                  * line comment
                  */
-                function foo() { 
+                function foo() {
                     $x = 10;
                 }
             ',
@@ -88,11 +88,11 @@ $tests = [
     'check function arguments' => [
         'function_name' => $funcName,
         'content' => '
-                /** 
-                 * function multiple 
+                /**
+                 * function multiple
                  * line comment
                  */
-                function foo($x, $y) { 
+                function foo($x, $y) {
                     $x = 10;
                 }
             ',
