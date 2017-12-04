@@ -12,7 +12,7 @@ execute_this_file_if_requested(__FILE__);
  * Parse class contents
  *
  * @param string $content
- * @return string JSON
+ * @return array
  */
 function parse_file($content) {
     if (empty($content)) {
@@ -119,6 +119,7 @@ function _get_file_functions($content) {
     for ($i = 0; $i < count($lines); $i++) {
         $line = $lines[$i];
         
+		// check if it's start of a class, skip to the end
         if (is_line_start_of_class($line)) {
             $classContentLines = [];
             
@@ -143,6 +144,7 @@ function _get_file_functions($content) {
 			continue;
         }
 
+		// check if the line is a start of a function
         if (is_line_start_of_function($line)) {
             $functionContentLines = [];
             
