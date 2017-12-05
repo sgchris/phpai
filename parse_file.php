@@ -9,7 +9,7 @@ require_once __DIR__.'/parse_class.php';
 execute_this_file_if_requested(__FILE__);
 
 /**
- * Parse class contents
+ * Parse file contents - all of its classes, and functions
  *
  * @param string $content
  * @return array

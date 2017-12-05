@@ -26,11 +26,16 @@ function parse_repository($repoUrl, $localFolder = false) {
 	if ($repoLocalFolder === false) {
 		return [];
 	}
+
+	$parsedData = _parseRepo($repoLocalFolder);
+	if ($parsedData === false) {
+		return [];
+	}
     
     $parsedData = [
         'readme' => _get_repo_readme($repoLocalFolder),
-        'classes' => _get_repo_classes($repoLocalFolder),
-        'functions' => _get_repo_functions($repoLocalFolder),
+        'classes' => $parsedData['classes'],
+        'functions' => $parsedData['functions'], 
     ];
     
     return $parsedData;
@@ -56,28 +61,73 @@ function _cloneRepo($repoUrl, $localFolder) {
 
 		$tempFolder.= '/'.uniqid('repo_parser_', $__more_entropy = true);
 		shell_exec($gitExecutable.' clone '.escapeshellarg($repoUrl).' '.escapeshellarg($tempFolder));
-		return $tempFolder;
+		if (is_dir($tempFolder) && is_readable($tempFolder)) {
+			return $tempFolder;
+		}
+
+		return false;
 	}
 
 }
 
+
+/**
+ * Get repository readme file content
+ *
+ * @param string $repoLocalFolder
+ * @return string|false - readme contents or FALSE
+ */
 function _get_repo_readme($repoLocalFolder) {
-	if (!is_dir($repoLocalFolder)) {
-		return false;
+	foreach (scandir($repoLocalFolder) as $fileName) {
+		if (preg_match('/^readme/i', $fileName)) {
+			if (is_readable($repoLocalFolder.'/'.$fileName)) {
+				return file_get_contents($repoLocalFolder.'/'.$fileName);
+			}
+		}
 	}
+
+	return false;
 }
 
 
-function _get_repo_classes($repoLocalFolder) {
-	if (!is_dir($repoLocalFolder)) {
-		return false;
-	}
-}
+/**
+ * Parse the repository to get all the classes and the functions
+ *
+ * @param string $repoLocalFolder
+ * @return array|false - parsed data like ['classes' => [...], 'functions' => [...]] or false
+ */
+function _parseRepo($repoLocalFolder) {
+	$classes = [];
+	$functions = [];
 
+	foreach (scandir($repoLocalFolder) as $fileName) {
+		// skip the dots
+		if ($fileName == '.' || $fileName == '..' || $fileName == '.git') {
+			continue;
+		}
 
-function _get_repo_functions($repoLocalFolder) {
-	if (!is_dir($repoLocalFolder)) {
-		return false;
+		$parsedData = false;
+		if (is_dir($repoLocalFolder.'/'.$fileName) && is_readable($repoLocalFolder.'/'.$fileName)) {
+			// parse the folder recursively
+			$parsedData = _parseRepo($repoLocalFolder.'/'.$fileName);
+		} elseif (preg_match('/\.(php|inc)$/i', $fileName) && is_readable($fileName)) {
+			// parse the file
+			$fileContents = file_get_contents($repoLocalFolder.'/'.$fileName);
+			if (!empty($fileContents)) {
+				$parsedData = parse_file($fileContents);
+			}
+		}
+
+		if ($parsedData !== false) {
+			if (!empty($parsedData['classes'])) {
+				$classes = array_merge($classes, $parsedData['classes']);
+			}
+			if (!empty($parsedData['functions'])) {
+				$functions = array_merge($functions, $parsedData['functions']);
+			}
+		}
 	}
+
+	return ['classes' => $classes, 'functions' => $functions];
 }
 
